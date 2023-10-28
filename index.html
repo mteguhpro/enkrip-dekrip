@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Online Encryption and Decryption</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css'
+        href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css'>
+</head>
+
+<body class="bg-body d-flex flex-column min-vh-100">
+    <div class="container">
+        <h1 class="text-center">Online Encryption and Decryption</h1>
+
+        <div class="card text-left bg-gradient mb-3">
+            <div class="card-body">
+                <form id="formulir">
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message:</label>
+                        <textarea class="form-control" id="message" rows="10" placeholder="Enter Message"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password:</label>
+                        <div class="input-group mb-3">
+                            <input type="password" class="form-control" id="password" placeholder="Enter Password">
+                            <span class="input-group-text" id="counter"></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <button id="encrypt" type="button" class="btn btn-primary bg-gradient m-1">Encryption</button>
+                <button id="decrypt" type="button" class="btn btn-success bg-gradient m-1">Decryption</button>
+                <button id="copy" type="button" class="btn btn-secondary bg-gradient m-1">Copy Message</button>
+                <button id="reset" type="button" class="btn btn-danger bg-gradient m-1">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto bg-dark bg-gradient text-end py-3">
+        <div class="container">
+            <a href="https://github.com/mteguhpro/enkrip-dekrip" class="text-light font-monospace text-decoration-none">
+                Show source code
+            </a>
+        </div>
+    </footer>
+    
+    <script src="assets/fernetBrowser.js"></script>
+    <script src="assets/md5.js"></script>
+
+    <script>
+        (function () {
+
+            'use strict'
+
+            function bytesToBase64(bytes) {
+                const binString = String.fromCodePoint(...bytes);
+                return btoa(binString);
+            }
+
+            var password = document.getElementById('password')
+            var message = document.getElementById('message')
+
+            function encrypt() {
+                var iniKey = password.value.length === 32 ? password.value : md5(password.value)
+                var secret = new fernet.Secret(bytesToBase64(new TextEncoder().encode(iniKey)));
+
+                var tokenEncode = new fernet.Token({
+                    secret: secret,
+                    time: Date.parse(1),
+                    iv: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+                })
+
+                message.value = tokenEncode.encode(message.value)
+            }
+
+            function decrypt() {
+                var iniKey = password.value.length === 32 ? password.value : md5(password.value)
+                var secret = new fernet.Secret(bytesToBase64(new TextEncoder().encode(iniKey)));
+
+                var tokenDecode = new fernet.Token({
+                    secret: secret,
+                    token: message.value,
+                    ttl: 0
+                })
+                try {
+                    message.value = tokenDecode.decode();
+                }
+                catch (err) {
+                    alert(err.message);
+                }
+            }
+
+            document.getElementById('encrypt').addEventListener("click", encrypt);
+            document.getElementById('decrypt').addEventListener("click", decrypt);
+            document.getElementById('reset').addEventListener("click", function () {
+                document.getElementById("formulir").reset();
+                document.getElementById('counter').textContent = '';
+            });
+            document.getElementById('copy').addEventListener("click", function () {
+                message.select();
+                message.setSelectionRange(0, 99999);
+                navigator.clipboard.writeText(message.value);
+            });
+            password.addEventListener("keyup", function () {
+                document.getElementById('counter').textContent = password.value.length
+            })
+
+        })()
+
+    </script>
+</body>
+
+</html>
